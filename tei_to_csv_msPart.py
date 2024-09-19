@@ -14,9 +14,9 @@ csvfile = open('output.csv', 'w', newline='', encoding="utf8")
 csvwriter = csv.writer(csvfile, delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
 csvwriter.writerow(
-    ["filename", "leaf-dim-unit", "leaf-height", "leaf-width", "writtenHeight", "writtenWidth"])
+    ["filename", "leaf-dim-unit", "leaf-height", "leaf-width", "writtenHeight", "writtenWidth", "LeafDivWritten"])
 
-corpus = glob.glob('../medieval-mss/collections/Laud_Misc/*.xml')
+corpus = glob.glob('../medieval-mss/collections/*/*.xml')
 
 # verbose but works
 def getDimension(dimension):
@@ -59,6 +59,13 @@ for file in corpus:
 
         filename=file.rpartition("/")[-1]
 
+## need to escape commas etc.
+##        content = ""
+##        try:
+##            content = soup.find("msContents").get_text()
+##        except:
+##            content = ""
+
         #dimensions for the ms as a whole if given
 
 
@@ -72,6 +79,9 @@ for file in corpus:
         print(dimension_unit)
 
         #leaf dimensios
+
+        # note that this and the following need to have type[binding] added at some point
+        
         #2 height
         height = ""
         try:
@@ -94,6 +104,7 @@ for file in corpus:
         #3 width
 
         width = ""
+
         
         try:
             width = soup.find("dimensions", {"type": "leaf"}).find("width")
@@ -103,8 +114,12 @@ for file in corpus:
         except:
             width = ""
 
+
+        #need to allow for column space
+
+        writtenHeight = ""
         try:
-            writtenHeight = msPart.find("dimensions", {"type": ("ruled", "written")}).find("height")
+            writtenHeight = soup.find("dimensions", {"type": ("ruled", "written", "column")}).find("height")
                  
             writtenHeight = getDimension(writtenHeight)
             
@@ -112,48 +127,62 @@ for file in corpus:
         except:
             writtenHeight = ""
 
+        writtenWidth = ""
         try:
-            writtenWidth = msPart.find("dimensions", {"type": ("ruled", "written")}).find("width")
+            writtenWidth = soup.find("dimensions", {"type": ("ruled", "written")}).find("width")
             writtenWidth = getDimension(writtenWidth)
         except:
             writtenWidth = ""
 
+        #todo: columns and lines
+
+
+        leafDivWritten = ""
+        try:
+            leafDivWritten = float(height) / float(writtenHeight)
+        except:
+            leafDivWritten = ""
+        
         csvwriter.writerow(
-            [filename, dimension_unit, height, width, writtenHeight, writtenWidth])
+            [filename, dimension_unit, height, width, writtenHeight, writtenWidth, leafDivWritten])
 
 
         #cycle through msParts
 
         
         
-        msParts = soup.find_all("msPart")
-
-        #print(msParts)
-
-        for msPart in msParts:
-            idno = msPart.find("idno")
-            idno = idno.get_text()
-            print(idno)
-
-
-            try:
-                writtenHeight = msPart.find("dimensions", {"type": ("ruled", "written")}).find("height")
-                 
-                writtenHeight = getDimension(writtenHeight)
-                
-                print(writtenHeight)
-            except:
-                writtenHeight = ""
-
-            try:
-                writtenWidth = msPart.find("dimensions", {"type": ("ruled", "written")}).find("width")
-                writtenWidth = getDimension(writtenWidth)
-            except:
-                writtenWidth = ""
-
-        
-            csvwriter.writerow(
-                [idno, "", height, width, writtenHeight, writtenWidth])
+##        msParts = soup.find_all("msPart")
+##
+##        
+##
+##        for msPart in msParts:
+##            idno = msPart.find("idno")
+##            idno = idno.get_text()
+##            print(idno)
+##
+##            writtenHeight = ""
+##
+##
+##            try:
+##                writtenHeight = msPart.find("dimensions", {"type": ("ruled", "written")}).find("height")
+##                 
+##                writtenHeight = getDimension(writtenHeight)
+##                
+##                print(writtenHeight)
+##            except:
+##                writtenHeight = ""
+##
+##            writtenWidth = ""
+##
+##            try:
+##                writtenWidth = msPart.find("dimensions", {"type": ("ruled", "written")}).find("width")
+##                writtenWidth = getDimension(writtenWidth)
+##            except:
+##                writtenWidth = ""
+##
+##        
+##            csvwriter.writerow(
+##                [idno, "", height, width, writtenHeight, writtenWidth])
 
 csvfile.close()
 
